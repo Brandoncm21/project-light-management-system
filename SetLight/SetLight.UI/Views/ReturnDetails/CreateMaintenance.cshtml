@@ -1,0 +1,257 @@
+﻿@model SetLight.Abstracciones.ViewModels.CrearMaintenanceViewModel
+
+@{
+    ViewBag.Title = "Crear mantenimiento";
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-9">
+            <div class="card shadow p-4 border-dark mb-5">
+                <h2 class="text-center fw-bold text-black mb-4">Crear mantenimiento</h2>
+
+                @using (Html.BeginForm("CreateMaintenance", "ReturnDetails", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    @Html.AntiForgeryToken()
+
+                    @* Muestra errores generales *@
+                    @Html.ValidationSummary(false, "", new { @class = "text-danger mb-3" })
+
+                    @Html.HiddenFor(m => m.EquipmentId, new { id = "EquipmentId" })
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-black">Equipo</label>
+
+                        <div class="input-group">
+                            <input type="text"
+                                   id="EquipoNombreVisible"
+                                   class="form-control border-dark"
+                                   placeholder="Seleccione un equipo..."
+                                   value="@Model.EquipmentName"
+                                   readonly />
+
+                            <button type="button"
+                                    id="btnAbrirModalEquipos"
+                                    class="btn btn-dark fw-semibold text-white"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalEquipos">
+                                Buscar equipo
+                            </button>
+                        </div>
+                        <small class="text-muted">Use el botón para buscar y seleccionar un equipo.</small>
+                        @Html.ValidationMessageFor(m => m.EquipmentId, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-black" for="Cantidad">Cantidad de equipos</label>
+                        @Html.TextBoxFor(m => m.Cantidad, new
+                   {
+                       @class = "form-control border-dark",
+                       type = "number",
+                       id = "Cantidad",
+                       @readonly = "readonly"
+                   })
+                        <small class="text-muted">
+                            Número de unidades del mismo equipo que se enviarán a mantenimiento.
+                        </small>
+                        @Html.ValidationMessageFor(m => m.Cantidad, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-black">Tipo de mantenimiento</label>
+                        @Html.DropDownListFor(
+                            m => m.MaintenanceType,
+                            new List<SelectListItem>
+                            {
+                                new SelectListItem { Text = "Revisión por daño",        Value = "1" },
+                                new SelectListItem { Text = "Reparación mayor",         Value = "2" },
+                                new SelectListItem { Text = "Mantenimiento preventivo", Value = "3" }
+                            },
+                            "-- Seleccione --",
+                            new { @class = "form-control border-dark", id = "MaintenanceType" }
+                        )
+                        @Html.ValidationMessageFor(m => m.MaintenanceType, "", new { @class = "text-danger" })
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-black">Comentarios / descripción del daño</label>
+                        @Html.TextAreaFor(m => m.Comments,
+                            new
+                            {
+                                @class = "form-control border-dark",
+                                rows = "4",
+                                placeholder = "Detalle el motivo del mantenimiento, daños observados, etc."
+                            })
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-black">Evidencia (foto, PDF, etc.)</label>
+                        <input type="file"
+                               name="evidenceFile"
+                               id="evidenceFile"
+                               class="form-control border-dark" />
+                        <small class="text-muted">Opcional, puede adjuntar una imagen o archivo como evidencia.</small>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-success px-4 fw-semibold text-white">
+                            Guardar mantenimiento
+                        </button>
+                        @Html.ActionLink(
+                            "Cancelar",
+                            "Mantenimientos",
+                            "ReturnDetails",
+                            null,
+                            new { @class = "btn btn-dark ms-3 fw-semibold text-white" }
+                        )
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Modal de selección de equipo *@
+<div class="modal fade" id="modalEquipos" tabindex="-1" aria-labelledby="modalEquiposLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="modalEquiposLabel">Seleccionar equipo</h5>
+            </div>
+            <div class="modal-body">
+
+                <div class="mb-3">
+                    <input type="text"
+                           id="filtroEquiposMantenimiento"
+                           class="form-control border-dark"
+                           placeholder="Buscar por nombre, marca o modelo..." />
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center align-middle" id="tablaEquiposMantenimiento">
+                        <thead class="table-dark text-white">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Marca</th>
+                                <th>Modelo</th>
+                                <th>Stock</th>
+                                <th>Cant. a enviar</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Equipos != null && Model.Equipos.Any())
+                            {
+                                foreach (var eq in Model.Equipos)
+                                {
+                                    <tr class="fila-equipo">
+                                        <td class="col-nombre">@eq.EquipmentName</td>
+                                        <td class="col-marca">@eq.Brand</td>
+                                        <td class="col-modelo">@eq.Model</td>
+                                        <td class="col-stock">@eq.Stock</td>
+                                        <td>
+                                            <input type="number"
+                                                   class="form-control border-dark input-cantidad"
+                                                   min="1"
+                                                   max="@eq.Stock"
+                                                   value="1" />
+                                        </td>
+                                        <td>
+                                            <button type="button"
+                                                    class="btn btn-danger btn-sm seleccionar-equipo text-white"
+                                                    data-id="@eq.EquipmentId"
+                                                    data-nombre="@eq.EquipmentName">
+                                                Seleccionar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-muted">
+                                        No hay equipos disponibles para mantenimiento.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jquery")
+
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="~/Scripts/Modals/Maintenance/CreateMaintenance.js"></script>
+
+    <script>
+        let tablaEquipos = null;
+
+        $('#modalEquipos').on('shown.bs.modal', function () {
+
+            // Evitar inicializar DataTables más de una vez
+            if (!tablaEquipos) {
+                tablaEquipos = $('#tablaEquiposMantenimiento').DataTable({
+                    pageLength: 8,
+                    lengthChange: false,
+                    searching: false,
+                    ordering: true,
+                    info: false,
+                    language: {
+                        paginate: {
+                            previous: "«",
+                            next: "»"
+                        }
+                    }
+                });
+            }
+        });
+
+        // Vincular el buscador manual
+        $('#filtroEquiposMantenimiento').on('keyup', function () {
+            if (tablaEquipos) {
+                tablaEquipos.search(this.value).draw();
+            }
+        });
+    </script>
+}
+
+<style>
+    /* Centrar paginación de DataTables */
+    .dataTables_wrapper .dataTables_paginate {
+        float: none !important;
+        text-align: center !important;
+        margin-top: 10px;
+    }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: #000 !important;
+            padding: 4px 8px !important;
+            margin: 0 4px !important;
+        }
+
+            .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+                font-weight: bold !important;
+                text-decoration: underline;
+            }
+
+    .modal-footer {
+        display: flex !important;
+        justify-content: flex-end !important;
+        border-top: none !important;
+    }
+</style>

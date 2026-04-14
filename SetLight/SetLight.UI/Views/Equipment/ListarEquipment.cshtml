@@ -1,0 +1,569 @@
+﻿@model PagedList.IPagedList<SetLight.Abstracciones.ModelosParaUI.EquipmentDto>
+@using PagedList.Mvc
+@using PagedList
+@using System.Globalization
+@using System.Web
+
+
+@{
+    ViewBag.Title = "Inventario";
+
+    var us = CultureInfo.GetCultureInfo("en-US");
+    var PLACEHOLDER = Url.Content("~/Content/img/placeholder-equipment.png");
+
+    Func<string, string> Src = (raw) =>
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return PLACEHOLDER;
+
+        var url = raw.Trim();
+
+        if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("//") ||
+            url.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            return url;
+
+        url = url.Replace("\\", "/");
+
+        if (url.StartsWith("~/")) return Url.Content(url);
+        if (url.StartsWith("/")) return Url.Content("~" + url);
+
+        return Url.Content("~/" + url.TrimStart('/'));
+    };
+
+    Func<int, IHtmlString> ChipEstado = (estado) =>
+    {
+        var t = "Desconocido";
+        switch (estado)
+        {
+            case 1: t = "Activo"; break;
+            case 2: t = "Agotado"; break;
+            case 3: t = "Inactivo"; break;
+            case 4: t = "Mantenimiento"; break;
+        }
+        return new HtmlString($"<span class=\"chip\">{t}</span>");
+    };
+}
+
+<style>
+    .pagination {
+        display: flex !important;
+        justify-content: center !important;
+        padding-left: 0;
+        list-style: none;
+    }
+
+        .pagination li a,
+        .pagination li span {
+            color: black !important;
+            margin: 0 5px;
+            border-radius: 4px;
+            padding: 5px 10px;
+            display: inline-block;
+        }
+
+        .pagination li.active span {
+            background-color: #e9ecef !important;
+            color: black !important;
+        }
+
+        .pagination li a:hover {
+            background-color: #f0f0f0;
+            color: black !important;
+        }
+
+    .inv-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+    }
+
+    /* Empuja la página hacia abajo para que no quede pegada al header negro */
+    .inv-page {
+        margin-top: 40px;
+        padding-bottom: 24px;
+    }
+
+    .equip-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0,1fr));
+        gap: 18px;
+        align-items: stretch;
+    }
+
+    @@media (max-width: 992px) {
+        .equip-grid {
+            grid-template-columns: repeat(2, minmax(0,1fr));
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .equip-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .equip-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        box-shadow: 0 6px 16px rgba(0,0,0,.08);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        transition: transform .12s ease, box-shadow .12s ease;
+    }
+
+        .equip-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(0,0,0,.12);
+        }
+
+    .equip-photo-wrapper {
+        width: 100%;
+        height: 260px;
+        overflow: hidden;
+        background: #f3f4f6;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .equip-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+
+
+    .equip-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px 14px;
+        flex: 1;
+    }
+
+    .equip-name {
+        font-size: .95rem;
+        font-weight: 800;
+        line-height: 1.25;
+        min-height: 2.4em;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .equip-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        font-size: .82rem;
+        color: #6b7280;
+    }
+
+    .chip {
+        background: #f6f7f9;
+        border: 1px solid #e9ebf0;
+        padding: .22rem .45rem;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .equip-price {
+        font-size: 1.05rem;
+        font-weight: 900;
+    }
+
+    .equip-actions {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: #f5f5f5;
+        border: 1px solid #e9e9e9;
+        text-decoration: none;
+    }
+
+        .icon-btn:hover {
+            background: #eee;
+        }
+
+        .icon-btn i {
+            font-size: 18px;
+            color: #222;
+        }
+
+    .toggle {
+        position: relative;
+        display: inline-flex;
+        width: 44px;
+        height: 24px;
+        align-items: center;
+    }
+
+        .toggle input {
+            display: none;
+        }
+
+        .toggle .track {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #c62828;
+            border-radius: 999px;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,.12);
+        }
+
+            .toggle .track::before {
+                content: "";
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                top: 2px;
+                left: 2px;
+                background: #fff;
+                border-radius: 50%;
+                box-shadow: 0 1px 3px rgba(0,0,0,.22);
+                transition: transform .18s ease;
+            }
+
+        .toggle input:checked + .track {
+            background: #2e7d32;
+        }
+
+            .toggle input:checked + .track::before {
+                transform: translateX(20px);
+            }
+
+    .btn-primary {
+        display: inline-block;
+        background: #198754;
+        color: #fff;
+        padding: .5rem .9rem;
+        border-radius: .5rem;
+        border: 1px solid #198754;
+        text-decoration: none;
+    }
+
+        .btn-primary:hover {
+            filter: brightness(1.05);
+        }
+
+    .btn-dark {
+        background: #111827;
+        color: #fff;
+        border: 1px solid #111827;
+    }
+
+        .btn-dark:hover {
+            filter: brightness(1.08);
+        }
+
+    .btn-outline-secondary {
+        background: #fff;
+        color: #111827;
+        border: 1px solid #9ca3af;
+    }
+
+        .btn-outline-secondary:hover {
+            background: #f3f4f6;
+        }
+
+    .btn-header-gray {
+        background-color: #e5e7eb;
+        border: 1px solid #d1d5db;
+        color: #111827;
+        padding: 0.45rem 1.4rem;
+        border-radius: 6px;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0,0,0,.04);
+    }
+
+        .btn-header-gray:hover {
+            background-color: #d4d4d8;
+            border-color: #9ca3af;
+            color: #111827;
+        }
+
+    .btn-header-green {
+        background-color: #15803d;
+        border: 1px solid #15803d;
+        color: #ffffff;
+        padding: 0.45rem 1.7rem;
+        border-radius: 6px;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0,0,0,.08);
+        text-decoration: none;
+        display: inline-block;
+    }
+
+        .btn-header-green:hover {
+            background-color: #166534;
+            border-color: #166534;
+            color: #ffffff;
+            text-decoration: none;
+        }
+</style>
+
+<div class="container inv-page">
+    <!-- Encabezado igual que Clientes, con Administrar categorías debajo del título -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <!-- Título a la izquierda -->
+        <h2 class="fw-bold text-black mb-0">Inventario de equipos</h2>
+
+        <!-- Botones a la derecha, uno al lado del otro -->
+        <div class="d-flex align-items-center gap-2">
+            <button type="button"
+                    class="btn btn-outline-secondary"
+                    id="btnAdministrarCategorias">
+                Administrar categorías
+            </button>
+
+            @Html.ActionLink(
+                "+ Registrar equipo",
+                "CrearEquipment",
+                "Equipment",
+                null,
+                new { @class = "btn btn-success text-white fw-semibold" }
+            )
+        </div>
+    </div>
+
+    @using (Html.BeginForm("ListarEquipment", "Equipment", FormMethod.Get))
+    {
+        <div class="card p-3 mb-3">
+            <div class="row g-2 align-items-end">
+                <!-- Nombre -->
+                <div class="col-md-4">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" name="Nombre"
+                           value="@ViewBag.NombreBuscado"
+                           class="form-control"
+                           placeholder="Canon, Sony, SN..." />
+                </div>
+
+                <!-- Tipo / Categoría -->
+                <div class="col-md-4">
+                    <label class="form-label">Tipo</label>
+                    @Html.DropDownList(
+                        "CategoriaId",
+                        (IEnumerable<SelectListItem>)ViewBag.Categorias,
+                        null,
+                        new { @class = "form-select" }
+                    )
+                </div>
+
+                <!-- Estado -->
+                <div class="col-md-4">
+                    <label class="form-label">Estado</label>
+                    @Html.DropDownList(
+                        "Estado",
+                        (IEnumerable<SelectListItem>)ViewBag.Estados,
+                        null,
+                        new { @class = "form-select" }
+                    )
+                </div>
+
+                <!-- Botones -->
+                <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+                    <button type="submit" class="btn btn-dark">
+                        <i class="bi bi-funnel me-1"></i> Filtrar
+                    </button>
+                    <a href="@Url.Action("ListarEquipment","Equipment")"
+                       class="btn btn-outline-secondary">
+                        Limpiar
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="equip-grid">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var e in Model)
+            {
+                var activo = (e.Status == 1);
+                var urlOn = Url.Action("Activar", "Equipment", new { id = e.EquipmentId });
+                var urlOff = Url.Action("Inactivar", "Equipment", new { id = e.EquipmentId });
+                var toggle = activo ? urlOff : urlOn;
+                var detId = $"det-{e.EquipmentId}";
+
+                <div class="equip-card">
+                    <div class="equip-photo-wrapper">
+                        <img class="equip-photo"
+                             src="@Src(e.ImageUrl)"
+                             alt="Foto @e.EquipmentName"
+                             onerror="this.onerror=null;this.src='@PLACEHOLDER';" />
+                    </div>
+
+
+                    <div class="equip-info">
+                        <div class="equip-name">
+                            @(!string.IsNullOrWhiteSpace(e.EquipoCompleto) ? e.EquipoCompleto : e.EquipmentName)
+                        </div>
+
+                        <div class="equip-chips">
+                            @if (!string.IsNullOrWhiteSpace(e.SerialNumber))
+                            {<span class="chip">SN: @e.SerialNumber</span>}
+
+                            @if (!string.IsNullOrWhiteSpace(e.CategoriaNombre))
+                            {<span class="chip">@e.CategoriaNombre</span>}
+
+                            <span class="chip">Disp: @e.Disponibles</span>
+
+                            @if (e.Alquilados > 0)
+                            {<span class="chip">Alq: @e.Alquilados</span>}
+
+                            @if (e.EnMantenimiento > 0)
+                            {<span class="chip">Mant: @e.EnMantenimiento</span>}
+
+                            @if (e.Faltantes > 0)
+                            {
+                                <span class="chip">Falt: @e.Faltantes</span>
+                            }
+
+
+                            @ChipEstado(e.Status)
+                        </div>
+
+                        <div class="equip-price">@e.RentalValue.ToString("C2", us)</div>
+
+                        <div class="equip-actions">
+                            <a href="@toggle" class="toggle" title="@(activo ? "Inactivar" : "Activar")">
+                                <input type="checkbox" @(activo ? "checked" : "") />
+                                <span class="track"></span>
+                            </a>
+
+                            <div class="btn-group ms-2" role="group">
+                                <!-- Editar equipo -->
+                                <a href="@Url.Action("Edit","Equipment", new { id = e.EquipmentId })"
+                                   class="btn btn-warning btn-sm rounded-circle"
+                                   title="Editar equipo">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+
+                                <!-- Ver detalles del equipo -->
+                                <button type="button"
+                                        class="btn btn-dark btn-sm rounded-circle"
+                                        title="Ver detalles"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#@detId"
+                                        aria-expanded="false">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+
+                                <!-- Ver trazabilidad -->
+                                <a href="@Url.Action("VerTrazabilidad","Trazabilidad", new { equipoId = e.EquipmentId })"
+                                   class="btn btn-secondary btn-sm rounded-circle"
+                                   title="Ver trazabilidad">
+                                    <i class="bi bi-graph-up"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div id="@detId" class="collapse equip-details" style="margin-top:6px;">
+                            @if (!string.IsNullOrWhiteSpace(e.Description))
+                            {
+                                @Html.Raw(HttpUtility.HtmlEncode(e.Description).Replace("\n", "<br/>"))
+                            }
+                            else
+                            {
+                                <span class="text-muted">Sin descripción.</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-muted">No hay equipos para mostrar.</div>
+        }
+    </div>
+
+    <div class="mt-4">
+        @Html.PagedListPager(
+            Model,
+            page => Url.Action("ListarEquipment", new
+            {
+                page,
+                Nombre = Request["Nombre"],
+                CategoriaId = Request["CategoriaId"],
+                Estado = Request["Estado"]
+            }),
+            PagedListRenderOptions.ClassicPlusFirstAndLast
+        )
+    </div>
+</div>
+
+<!-- Modal: Lista de categorías -->
+<div class="modal fade" id="modalCategorias" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Categorías de equipos</h5>
+
+            </div>
+
+            <div class="modal-body" id="contenedorListaCategorias">
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-danger"
+                        id="btnAbrirCrearCategoriaDesdeLista">
+                    + Nueva categoría
+                </button>
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Editar categoría -->
+<div class="modal fade" id="modalEditarCategoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar categoría</h5>
+            </div>
+            <div class="modal-body" id="contenedorEditarCategoria">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Crear nueva categoría -->
+<div class="modal fade" id="modalEqCategory" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" id="modal-content-category"></div>
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/jqueryval")
+    <script src="~/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+
+    <script src="~/Scripts/Modals/EqCategory/EqCategoryList.js"></script>
+    <script src="~/Scripts/Modals/EqCategory/EqCategoryModal.js"></script>
+}

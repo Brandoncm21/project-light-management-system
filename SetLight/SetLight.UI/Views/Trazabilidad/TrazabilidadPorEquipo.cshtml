@@ -1,0 +1,235 @@
+﻿@using PagedList
+@using PagedList.Mvc
+@model IPagedList<SetLight.Abstracciones.ModelosParaUI.TrazabilidadDto>
+
+@{
+    ViewBag.Title = "Trazabilidad del Equipo";
+}
+
+<div class="container mt-4 mb-5 bg-white p-4 shadow rounded border-dark" style="max-width: 1000px;">
+    <h2 class="mb-4 text-dark fw-bold text-center">
+        Trazabilidad del Equipo
+        <span class="text-primary">@ViewBag.EquipoNombre</span>
+        <small class="text-secondary">(ID #@ViewBag.EquipoId)</small>
+    </h2>
+
+
+    <!-- Filtros -->
+    <form method="get" class="row mb-4">
+        <input type="hidden" name="equipoId" value="@ViewBag.EquipoId" />
+
+        <div class="col-md-3">
+            <label class="form-label fw-semibold text-dark">Desde</label>
+            <input type="date" name="desde" class="form-control border-dark" value="@ViewBag.FiltroDesde" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-semibold text-dark">Hasta</label>
+            <input type="date" name="hasta" class="form-control border-dark" value="@ViewBag.FiltroHasta" />
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end gap-2 mt-3 mt-md-0">
+            <button class="btn btn-dark fw-semibold">Filtrar</button>
+
+            <a href="@Url.Action("VerTrazabilidad", new { equipoId = ViewBag.EquipoId, page = 1 })"
+               class="btn btn-outline-secondary fw-semibold">
+                Limpiar
+            </a>
+        </div>
+    </form>
+
+    <!-- Botón PDF -->
+    <div class="mb-3 text-end">
+        <a class="btn btn-danger"
+           href="@Url.Action(
+        "DescargarTrazabilidad",
+        "Trazabilidad",
+        new {
+            equipoId = ViewBag.EquipoId,
+            desde = ViewBag.FiltroDesde,
+            hasta = ViewBag.FiltroHasta
+        })">
+            Descargar PDF
+        </a>
+
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle text-center border-dark">
+            <thead class="table-dark text-white">
+                <tr>
+                    <th>Tipo de Evento</th>
+                    <th>N° Orden</th>
+                    <th>N° Mantenimiento</th>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Fin</th>
+                    <th>Cliente</th>
+                    <th>Manejado por</th>
+                    <th>Tipo de Mantenimiento</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var badgeClass = "badge bg-secondary";
+
+                    if (item.TipoEvento == "Préstamo")
+                    {
+                        badgeClass = "badge bg-info text-dark";
+                    }
+                    else if (item.TipoEvento == "Mantenimiento")
+                    {
+                        badgeClass = "badge bg-warning text-dark";
+                    }
+
+                    <tr>
+                        <td>
+                            <span class="@badgeClass">@item.TipoEvento</span>
+                        </td>
+
+                        <td>
+                            @if (item.OrderId.HasValue)
+                            {
+                                @Html.ActionLink(
+                                    item.OrderId.Value.ToString(),
+                                    "DetallesDevolucion",                 // Acción
+                                    "ReturnDetails",                      // Controller
+                                    new { orderId = item.OrderId.Value }, // 🔹 va como querystring ?orderId=49
+                                    new { @class = "text-decoration-underline text-dark fw-semibold" }
+                                )
+                            }
+                            else
+                            {
+                                @Html.Raw("-")
+                            }
+                        </td>
+
+                        <td>
+                            @if (item.MaintenanceId.HasValue)
+                            {
+                                @Html.ActionLink(
+                                    item.MaintenanceId.Value.ToString(),
+                                    "DetallesMantenimiento",              // Acción
+                                    "ReturnDetails",                      // Controller
+                                    new { id = item.MaintenanceId.Value },// 🔹 va en la ruta /DetallesMantenimiento/83
+                                    new { @class = "text-decoration-underline text-dark fw-semibold" }
+                                )
+                            }
+                            else
+                            {
+                                @Html.Raw("-")
+                            }
+                        </td>
+
+
+
+                        <td>
+                            @(item.FechaInicio.HasValue
+                ? item.FechaInicio.Value.ToString("dd/MM/yyyy")
+                : "-")
+                        </td>
+                        <td>
+                            @(
+                item.FechaFin.HasValue
+                    ? item.FechaFin.Value.ToString("dd/MM/yyyy")
+                    : item.FechaMantenimiento.HasValue
+                        ? item.FechaMantenimiento.Value.ToString("dd/MM/yyyy")
+                        : "-"
+            )
+                        </td>
+                        <td>
+                            @(item.TipoEvento == "Préstamo"
+                ? (item.ClienteNombre ?? "-")
+                : "-")
+                        </td>
+                        <td>
+                            @(
+                item.TipoEvento == "Préstamo"
+                    ? (item.EncargadoPrestamo ?? "-")
+                    : item.TipoEvento == "Mantenimiento"
+                        ? (item.Tecnico ?? "-")
+                        : "-"
+            )
+                        </td>
+                        <td>
+                            @(
+                item.TipoEvento == "Mantenimiento"
+                    ? (
+                        item.TipoMantenimiento == 1 ? "Revisión por daño"
+                        : item.TipoMantenimiento == 2 ? "Reparación mayor"
+                        : item.TipoMantenimiento == 3 ? "Mantenimiento preventivo"
+                        : "—"
+                      )
+                    : "-"
+            )
+                        </td>
+                    </tr>
+                }
+
+            </tbody>
+        </table>
+
+        <!-- Paginación -->
+        <div class="pagination-container text-center mt-4">
+            @Html.PagedListPager(
+                Model,
+                page => Url.Action(
+                    "VerTrazabilidad",
+                    new
+                    {
+                        equipoId = ViewBag.EquipoId,
+                        page,
+                        desde = ViewBag.FiltroDesde,
+                        hasta = ViewBag.FiltroHasta
+                    }
+                ),
+                new PagedListRenderOptions
+                {
+                    DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+                    DisplayLinkToLastPage = PagedListDisplayMode.Always,
+                    DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+                    DisplayLinkToNextPage = PagedListDisplayMode.Always,
+                    DisplayLinkToIndividualPages = true,
+                    MaximumPageNumbersToDisplay = 10,
+                    UlElementClasses = new[] { "pagination-custom" }
+                }
+            )
+        </div>
+
+        <style>
+            .pagination-custom {
+                display: flex;
+                justify-content: center;
+                gap: 12px;
+                padding: 20px 0;
+            }
+
+                .pagination-custom li {
+                    list-style: none;
+                }
+
+                    .pagination-custom li a,
+                    .pagination-custom li span {
+                        font-size: 18px;
+                        color: black;
+                        text-decoration: none;
+                        padding: 4px 8px;
+                    }
+
+                    .pagination-custom li.active span {
+                        font-weight: bold;
+                    }
+
+                    .pagination-custom li.disabled span {
+                        color: #999;
+                    }
+        </style>
+    </div>
+
+    <div class="mt-4 text-center">
+        <a href="@Url.Action("ListarEquipment", "Equipment")" class="btn btn-secondary fw-semibold">
+            Volver al Inventario
+        </a>
+    </div>
+</div>

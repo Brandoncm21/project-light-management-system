@@ -1,0 +1,33 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data.Entity;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using SetLight.Abstracciones.ModelosParaUI;
+using SetLight.AccesoADatos.Modelos;
+using SetLight.Entidades;
+
+namespace SetLight.AccesoADatos
+{
+    public class Contexto: DbContext
+    {
+        public Contexto() : base("name=Contexto")
+        {
+
+        }
+        public DbSet<EquipmentDA> Equipment { get; set; }
+        public DbSet<EqCategoryDA> EqCategory { get; set; }
+        public DbSet<ClientDa> Clients { get; set; }
+        public DbSet<RentalOrderDA> RentalOrders { get; set; }
+        public DbSet<OrderDetailDA> OrderDetails { get; set; }
+
+        public DbSet<ReturnDetailDa> ReturnDetails { get; set; }
+
+        public DbSet<Maintenance> Maintenance { get; set; }
+
+        public DbSet<EmpleadoDA> Empleado { get; set; }
+  
+
+    }
+}

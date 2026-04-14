@@ -1,0 +1,279 @@
+﻿@model SetLight.Abstracciones.ViewModels.CrearRentalOrderViewModel
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-9">
+                <div class="card shadow p-4 border-dark">
+                    <h2 class="text-center fw-bold text-black mb-4">Crear nueva orden de alquiler</h2>
+
+                    @Html.ValidationSummary(false, "", new { @class = "text-danger mb-3" })
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-black">Cliente</label>
+                        <input type="hidden" name="ClientId" id="clienteId" value="@Model.ClientId" />
+                        <div class="d-flex gap-2">
+                            <input type="text"
+                                   id="clienteNombre"
+                                   class="form-control border-dark"
+                                   placeholder="Seleccione un cliente..."
+                                   readonly />
+                            <button type="button" class="btn btn-dark fw-semibold text-white"
+                                    data-bs-toggle="modal" data-bs-target="#clienteModal">
+                                Buscar cliente
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-black">Fecha de inicio</label>
+                        @Html.TextBoxFor(m => m.StartDate,
+                            new { type = "date", @class = "form-control border-dark", id = "StartDate" })
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-black">Fecha de fin</label>
+                        @Html.TextBoxFor(m => m.EndDate,
+                            new { type = "date", @class = "form-control border-dark", id = "EndDate" })
+                    </div>
+
+                    @Html.HiddenFor(m => m.StatusOrder)
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-black">Descuento manual (%)</label>
+                        @Html.TextBoxFor(m => m.DescuentoManual,
+                            new
+                            {
+                                @class = "form-control border-dark",
+                                type = "number",
+                                min = "0",
+                                max = "100",
+                                step = "0.01",
+                                id = "DescuentoManual"
+                            })
+                    </div>
+
+                    <!-- =======================
+                         ✅ Misión 2: Entrega
+                         ======================= -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            @Html.CheckBoxFor(m => m.IsDelivery, new { @class = "form-check-input", id = "IsDelivery" })
+                            <label class="form-check-label fw-semibold text-black" for="IsDelivery">
+                                ¿Con entrega?
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="deliveryFields" class="mb-3" style="display:none;">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-black">Dirección de entrega</label>
+                            @Html.TextAreaFor(m => m.DeliveryAddress,
+                                new
+                                {
+                                    @class = "form-control border-dark",
+                                    rows = "3",
+                                    maxlength = "300",
+                                    id = "DeliveryAddress",
+                                    placeholder = "Escriba la dirección exacta (máx. 300 caracteres)"
+                                })
+                            @Html.ValidationMessageFor(m => m.DeliveryAddress, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-black">Costo de transporte</label>
+                            @Html.TextBoxFor(m => m.TransportCost,
+                                new
+                                {
+                                    @class = "form-control border-dark",
+                                    type = "number",
+                                    min = "0",
+                                    step = "0.01",
+                                    id = "TransportCost"
+                                })
+                            @Html.ValidationMessageFor(m => m.TransportCost, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-black">Equipos</label><br />
+                        <button type="button"
+                                class="btn btn-dark fw-semibold text-white"
+                                data-bs-toggle="modal"
+                                data-bs-target="#modalSeleccionarEquipos">
+                            Seleccionar equipos
+                        </button>
+                    </div>
+
+                    <div id="equiposSeleccionadosContainer" class="mt-4">
+                        <h5 class="fw-bold text-dark mb-3">Equipos seleccionados</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered text-center align-middle" id="tablaResumenEquipos">
+                                <thead class="table-dark text-white">
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Marca</th>
+                                        <th>Modelo</th>
+                                        <th>Valor Renta</th>
+                                        <th>Cantidad</th>
+                                        <th>Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                        <div id="resumenCostoAlquiler" class="mt-4 text-center">
+                            <h5 class="fw-bold text-dark mb-3">Cálculo de alquiler</h5>
+                            <table class="table table-bordered mx-auto" style="max-width: 500px;">
+                                <tbody>
+                                    <tr>
+                                        <th style="width: 60%;">Días de alquiler</th>
+                                        <td><span id="diasAlquiler">0</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Subtotal</th>
+                                        <td>$<span id="subtotalAlquiler">0</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Descuento aplicado</th>
+                                        <td>$<span id="descuentoAplicado">0</span></td>
+                                    </tr>
+
+                                    <!-- ✅ Misión 2 -->
+                                    <tr>
+                                        <th>Transporte</th>
+                                        <td>$<span id="transporteAlquiler">0</span></td>
+                                    </tr>
+
+                                    <tr>
+                                        <th>IVA (13%)</th>
+                                        <td>$<span id="ivaAlquiler">0</span></td>
+                                    </tr>
+                                    <tr class="fw-bold bg-light">
+                                        <th>Total</th>
+                                        <td>$<span id="totalAlquiler">0</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+
+                    <div id="inputsEquiposContainer"></div>
+
+                    <div class="text-center mt-4">
+                        <a href="@Url.Action("Index", "RentalOrder")"
+                           class="btn btn-dark fw-semibold text-white me-2">
+                            Volver al listado
+                        </a>
+
+                        <input type="submit" value="Crear orden"
+                               class="btn btn.success fw-semibold text-white btn btn-success fw-semibold text-white" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal de equipos -->
+<div class="modal fade" id="modalSeleccionarEquipos" tabindex="-1" role="dialog" aria-labelledby="modalLabelEquipos" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="modalLabelEquipos">Seleccionar equipos</h5>
+            </div>
+            <div class="modal-body" id="modalBodyEquipos">
+                @Html.Partial("_SeleccionarEquipos", Model.EquiposDisponibles)
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de clientes -->
+<div class="modal fade" id="clienteModal" tabindex="-1" role="dialog" aria-labelledby="clienteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="clienteModalLabel">Seleccionar Cliente</h5>
+            </div>
+            <div class="modal-body" id="contenedorClientes">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/Scripts/Modals/CreateOrder/CreateOrder.js"></script>
+    <script src="~/Scripts/Modals/CreateOrder/AgregarCliente.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const modalEquipos = document.getElementById("modalSeleccionarEquipos");
+
+            modalEquipos.addEventListener("shown.bs.modal", function () {
+                paginarEquipos(5);
+            });
+
+            // =======================
+            // ✅ Misión 2: UI Entrega
+            // =======================
+            const chkDelivery = document.getElementById("IsDelivery");
+            const deliveryFields = document.getElementById("deliveryFields");
+            const txtAddress = document.getElementById("DeliveryAddress");
+            const txtTransport = document.getElementById("TransportCost");
+            const spanTransport = document.getElementById("transporteAlquiler");
+
+            function toNumber(v) {
+                const n = parseFloat((v ?? "").toString().replace(",", "."));
+                return isNaN(n) ? 0 : n;
+            }
+
+            function refrescarEntregaUI() {
+                const isOn = chkDelivery && chkDelivery.checked;
+
+                if (deliveryFields) deliveryFields.style.display = isOn ? "block" : "none";
+
+                if (!isOn) {
+                    if (txtAddress) txtAddress.value = "";
+                    if (txtTransport) txtTransport.value = "0";
+                    if (spanTransport) spanTransport.textContent = "0";
+                } else {
+                    const tc = toNumber(txtTransport ? txtTransport.value : 0);
+                    if (spanTransport) spanTransport.textContent = tc.toFixed(2).replace(/\.00$/, "");
+                }
+
+                // Intentar recalcular total si tu JS ya tiene una función
+                if (typeof window.recalcularResumenAlquiler === "function") {
+                    window.recalcularResumenAlquiler();
+                } else if (typeof window.calcularResumen === "function") {
+                    window.calcularResumen();
+                } else {
+                    // fallback mínimo: solo actualizar transporte en resumen
+                    const tc = toNumber(txtTransport ? txtTransport.value : 0);
+                    if (spanTransport) spanTransport.textContent = tc.toFixed(2).replace(/\.00$/, "");
+                }
+            }
+
+            if (chkDelivery) chkDelivery.addEventListener("change", refrescarEntregaUI);
+            if (txtTransport) txtTransport.addEventListener("input", refrescarEntregaUI);
+
+            // Estado inicial
+            refrescarEntregaUI();
+        });
+    </script>
+}

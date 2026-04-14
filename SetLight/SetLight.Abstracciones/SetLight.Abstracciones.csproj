@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{C3B7D29A-84AF-47EE-B05D-E2B5503BBE14}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SetLight.Abstracciones</RootNamespace>
+    <AssemblyName>SetLight.Abstracciones</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Annotations, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ComponentModel.Annotations.5.0.0\lib\net461\System.ComponentModel.Annotations.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AccesoADatos\Client\CreateClient\ICreateClientAD.cs" />
+    <Compile Include="AccesoADatos\Client\EditClient\IEditClientAD.cs" />
+    <Compile Include="AccesoADatos\Client\ListClient\IListClientAD.cs" />
+    <Compile Include="AccesoADatos\Client\ObtenerClPorId\IObtenerClPorIDAD.cs" />
+    <Compile Include="AccesoADatos\Empleado\ICrearEmpleadoAD.cs" />
+    <Compile Include="AccesoADatos\Empleado\IEditarEmpleadoAD.cs" />
+    <Compile Include="AccesoADatos\Empleado\IListarEmpleadoAD.cs" />
+    <Compile Include="AccesoADatos\Empleado\IObtenerEmpleadoPorIDAD.cs" />
+    <Compile Include="AccesoADatos\EqCategory\CrearEqCategory\ICrearEqCategoryAD.cs" />
+    <Compile Include="AccesoADatos\EqCategory\EditEqCategory\IEditEqCategoryAD.cs" />
+    <Compile Include="AccesoADatos\Equipment\CrearEquipment\ICrearEquipmentAD.cs" />
+    <Compile Include="AccesoADatos\Equipment\EditarEquipment\IEditarEquipmentAD.cs" />
+    <Compile Include="AccesoADatos\Equipment\ListarEquipment\IListarEquipmentAD.cs" />
+    <Compile Include="AccesoADatos\Equipment\ObtenerEqPorID\IObtenerEqPorIDAD.cs" />
+    <Compile Include="AccesoADatos\RentalOrder\CrearRentalOrder\ICrearRentalOrderAD.cs" />
+    <Compile Include="AccesoADatos\RentalOrder\EditRentalOrder\IEditRentalOrderAD.cs" />
+    <Compile Include="AccesoADatos\RentalOrder\ListarRentalOrder\IListarRentalOrder.cs" />
+    <Compile Include="AccesoADatos\RentalOrder\ObtenerROPorID\IObtenerROPorIdAD.cs" />
+    <Compile Include="AccesoADatos\ReturnDetails\CreateReturnDetails\ICreateReturnDetailsAD.cs" />
+    <Compile Include="AccesoADatos\trazabilidad\ITrazabilidadAD.cs" />
+    <Compile Include="LogicaDeNegocio\Client\CreateClient\ICrearClientLN.cs" />
+    <Compile Include="LogicaDeNegocio\Client\EditClient\IEditClientLN.cs" />
+    <Compile Include="LogicaDeNegocio\Client\ListClient\IListarClientLN.cs" />
+    <Compile Include="LogicaDeNegocio\Client\ObtenerClPorId\IObtenerClPorIDLN.cs" />
+    <Compile Include="LogicaDeNegocio\Empleado\ICrearEmpleadoLN.cs" />
+    <Compile Include="LogicaDeNegocio\Empleado\IEditarEmpleadoLN.cs" />
+    <Compile Include="LogicaDeNegocio\Empleado\IListarEmpleadoLN.cs" />
+    <Compile Include="LogicaDeNegocio\Empleado\IObtenerEmpleadoPorIDLN.cs" />
+    <Compile Include="LogicaDeNegocio\EqCategory\CrearEqCategory\ICrearEqCategoryLN.cs" />
+    <Compile Include="LogicaDeNegocio\EqCategory\EditEqCategory\IEditEqCategoryLN.cs" />
+    <Compile Include="LogicaDeNegocio\Equipment\CrearEquipment\ICrearEquipmentLN.cs" />
+    <Compile Include="LogicaDeNegocio\Equipment\EditarEquipment\IEquipmentLN.cs" />
+    <Compile Include="LogicaDeNegocio\Equipment\IObtenerEqPorIDLN.cs" />
+    <Compile Include="LogicaDeNegocio\Equipment\ListarEquipment\IListarEquipmentLN.cs" />
+    <Compile Include="LogicaDeNegocio\rentalorder\CrearRentalOrder\ICrearRentalOrderLN.cs" />
+    <Compile Include="LogicaDeNegocio\rentalorder\EditRentalOrder\IEditRentalOrderLN.cs" />
+    <Compile Include="LogicaDeNegocio\rentalorder\ListarRentalOrder\IListarRentalOrderLN.cs" />
+    <Compile Include="LogicaDeNegocio\rentalorder\ObtenerROPorID\IObtenerROPorIdLN.cs" />
+    <Compile Include="LogicaDeNegocio\ReturnDetails\CreateReturnDetails\ICreateReturnDetailsLN.cs" />
+    <Compile Include="LogicaDeNegocio\trazabilidad\ITrazabilidadLN.cs" />
+    <Compile Include="ModelosParaUI\ClientDto.cs" />
+    <Compile Include="ModelosParaUI\EmpeladoDto.cs" />
+    <Compile Include="ModelosParaUI\EqCategoryDto.cs" />
+    <Compile Include="ModelosParaUI\EquipmentDto.cs" />
+    <Compile Include="ModelosParaUI\MaintenanceDto.cs" />
+    <Compile Include="ModelosParaUI\OrderDetailDto.cs" />
+    <Compile Include="ModelosParaUI\RentalOrderDto.cs" />
+    <Compile Include="ModelosParaUI\ReturnDetailsDto.cs" />
+    <Compile Include="ModelosParaUI\TrazabilidadDto.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ViewModels\CrearMaintenanceViewModel.cs" />
+    <Compile Include="ViewModels\CrearRentalOrderViewModel .cs" />
+    <Compile Include="ViewModels\EquipmentReturnViewModel.cs" />
+    <Compile Include="ViewModels\PerfilUsuarioViewModel.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="AccesoADatos\Maintenance\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

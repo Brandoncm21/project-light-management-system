@@ -1,0 +1,280 @@
+﻿@using PagedList;
+@using PagedList.Mvc;
+@model IPagedList<SetLight.Abstracciones.ModelosParaUI.RentalOrderDto>
+
+@{
+    ViewBag.Title = "Historial de órdenes";
+
+    Func<int, string> TextoEstado = estado =>
+    {
+        switch (estado)
+        {
+            case 1: return "Activa";
+            case 2: return "Completada";
+            case 3: return "Cancelada";
+            default: return "Desconocido";
+        }
+    };
+
+    Func<int, string> ClaseEstado = estado =>
+    {
+        switch (estado)
+        {
+            case 1: return "badge bg-info text-dark";
+            case 2: return "badge bg-success";
+            case 3: return "badge bg-secondary";
+            default: return "badge bg-light text-dark";
+        }
+    };
+}
+
+<div class="container mt-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0 text-dark fw-bold">
+            Historial de órdenes de <span class="text-secondary">@ViewBag.ClientName</span>
+        </h2>
+
+        @Html.ActionLink(
+            "Volver al listado de clientes",
+            "ListarClient",
+            "Client",
+            null,
+            new { @class = "btn btn-dark fw-semibold text-white" }
+        )
+    </div>
+
+    <div class="card shadow-sm border-dark">
+        <div class="card-body">
+
+            <!-- Filtros -->
+            <div class="card p-3 mb-3 border-dark">
+                <form method="get" class="row g-2 align-items-end">
+                    <input type="hidden" name="clientId" value="@ViewBag.ClientId" />
+
+                    <div class="col-md-3">
+                        <label class="form-label text-black fw-semibold">Desde</label>
+                        <input type="date"
+                               name="desde"
+                               class="form-control border-dark"
+                               value="@ViewBag.FiltroDesde" />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label text-black fw-semibold">Hasta</label>
+                        <input type="date"
+                               name="hasta"
+                               class="form-control border-dark"
+                               value="@ViewBag.FiltroHasta" />
+                    </div>
+
+                    <div class="col-md-6 d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-dark">
+                            <i class="bi bi-funnel me-1"></i> Filtrar
+                        </button>
+
+                        <a href="@Url.Action("History", new { clientId = ViewBag.ClientId })"
+                           class="btn btn-outline-secondary">
+                            Limpiar
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info mb-0">
+                    Este cliente no tiene órdenes registradas.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle text-center">
+                        <thead class="table-dark text-white">
+                            <tr>
+                                <th># Orden</th>
+                                <th>Fecha de Orden</th>
+                                <th>Inicio</th>
+                                <th>Fin</th>
+                                <th>Estado</th>
+                                <th>Equipos</th>
+                                <th>Comprobante</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in Model)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@order.OrderId</td>
+                                    <td>@order.OrderDate.ToShortDateString()</td>
+                                    <td>@order.StartDate.ToShortDateString()</td>
+                                    <td>@order.EndDate.ToShortDateString()</td>
+                                    <td>
+                                        <span class="@ClaseEstado(order.StatusOrder)">
+                                            @TextoEstado(order.StatusOrder)
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-dark"
+                                                type="button"
+                                                onclick="mostrarEquiposModal(@order.OrderId)">
+                                            <i class="bi bi-eye me-1"></i> Ver equipos
+                                        </button>
+                                    </td>
+                                    <td>
+                                        @if (order.StatusOrder == 1 || order.StatusOrder == 2)
+                                        {
+                                            <a href="@Url.Action("VerComprobante", "RentalOrder", new { id = order.OrderId })"
+                                               class="btn btn-sm btn-success">
+                                                <i class="bi bi-download me-1"></i> Descargar
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No disponible</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-container text-center mt-4">
+                    @Html.PagedListPager(
+                        Model,
+                        page => Url.Action(
+                            "History",
+                            new
+                            {
+                                clientId = ViewBag.ClientId,
+                                page,
+                                desde = ViewBag.FiltroDesde,
+                                hasta = ViewBag.FiltroHasta
+                            }),
+                        new PagedListRenderOptions
+                        {
+                            DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+                            DisplayLinkToLastPage = PagedListDisplayMode.Always,
+                            DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+                            DisplayLinkToNextPage = PagedListDisplayMode.Always,
+                            DisplayLinkToIndividualPages = true,
+                            MaximumPageNumbersToDisplay = 10,
+                            UlElementClasses = new[] { "pagination-custom" }
+                        }
+                    )
+                </div>
+            }
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 10px;
+    }
+
+    .pagination-custom {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        padding: 20px 0;
+    }
+
+        .pagination-custom li {
+            list-style: none;
+        }
+
+            .pagination-custom li a,
+            .pagination-custom li span {
+                font-size: 20px;
+                color: black;
+                text-decoration: none;
+                padding: 4px 8px;
+            }
+
+            .pagination-custom li.active span {
+                font-weight: bold;
+            }
+
+            .pagination-custom li.disabled span {
+                color: #999;
+            }
+</style>
+
+@* Modales de equipos *@
+@foreach (var order in Model)
+{
+    <div class="modal fade"
+         id="modalEquipos-@order.OrderId"
+         tabindex="-1"
+         aria-labelledby="modalLabel-@order.OrderId"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content border-dark">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="modalLabel-@order.OrderId">
+                        Equipos de la orden #@order.OrderId
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white"
+                            data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle text-center">
+                            <thead class="table-dark text-white">
+                                <tr>
+                                    <th>Equipo</th>
+                                    <th>Marca</th>
+                                    <th>Modelo</th>
+                                    <th>Cantidad</th>
+                                    <th>Valor Unitario</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (order.Details != null && order.Details.Any())
+                                {
+                                    foreach (var detalle in order.Details)
+                                    {
+                                        var sub = detalle.RentalValue * detalle.Quantity;
+                                        <tr>
+                                            <td>@detalle.EquipmentName</td>
+                                            <td>@detalle.Brand</td>
+                                            <td>@detalle.Model</td>
+                                            <td>@detalle.Quantity</td>
+                                            <td>$@detalle.RentalValue.ToString("N2")</td>
+                                            <td>$@sub.ToString("N2")</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="6">Sin equipos registrados.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@section Scripts {
+    <script src="~/Scripts/Modals/HistoryOrder/HistoryOrder.js"></script>
+}

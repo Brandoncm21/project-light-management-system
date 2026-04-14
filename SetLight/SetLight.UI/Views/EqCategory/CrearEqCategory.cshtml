@@ -1,0 +1,44 @@
+﻿@model SetLight.Abstracciones.ModelosParaUI.EqCategoryDto
+
+@{
+    Layout = null;
+}
+
+@using (Ajax.BeginForm("CrearEqCategory", "EqCategory",
+    new AjaxOptions
+    {
+        InsertionMode = InsertionMode.Replace,
+        UpdateTargetId = "modal-content-category",
+        OnSuccess = "onCategoryCreated"
+    },
+    new { @id = "formCrearCategoria" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title">Crear Nueva Categoría</h5>
+    </div>
+
+    <div class="modal-body bg-white">
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+        <div class="form-group mb-3">
+            @Html.LabelFor(model => model.CategoryName, "Escriba el nombre de la categoría", htmlAttributes: new { @class = "form-label fw-bold text-dark" })
+            @Html.TextBoxFor(model => model.CategoryName, new { @class = "form-control", placeholder = "Nombre de la categoría" })
+            @Html.ValidationMessageFor(model => model.CategoryName, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="modal-footer bg-light">
+        <button type="submit" class="btn btn-success">
+            Guardar
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Cancelar
+        </button>
+    </div>
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
